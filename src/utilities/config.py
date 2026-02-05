@@ -13,9 +13,13 @@ class SimulationConfig:
     """
     objective : Objectives(Enum)
             The optimization objective to achieve (e.g., profit maximization).
-                - total_Profit: total profit of served requests
-                - waiting_time: total wait time of served requests
+                - total_profit: total profit of served requests (fare minus cost)
+                - total_revenue: total fare (revenue) of served requests
+                - total_cost: total driving cost of all routes
                 - total_customers: total number of served customers
+                - waiting_time: total wait time of customers
+                - total_empty_travel_time: total travel time on empty legs only
+                - multi_objective: weighted combination of multiple objectives (see algorithm_params)
 
         algorithm : Algorithm(Enum)
             The optimization algorithm to use for routing and assignment.
@@ -61,6 +65,10 @@ class SimulationConfig:
                         - FIX_VARIABLES: fix some of the variables in the model
                         - FIX_ARRIVALS: fix a time window around the arrival time
                         - BONUS: arbitrary destroy method as bonus
+
+                - weight: float (optional, for objective multi_objective)
+                    Weight w in [0, 1] for profit in the combined objective (cost weight is 1-w).
+                    Default 1.
 
     """
     objective: Objectives = Objectives.TOTAL_CUSTOMERS
