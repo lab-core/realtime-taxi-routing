@@ -7,38 +7,24 @@ from typing import Any, Dict, List
 
 
 class ReOptimizer(Solver):
-    """Provide methods to Re-optimize the vehicle routing and the trip-route assignment based on destroy and repair
-    ideas. This class includes three destroy function ():
-            1. destroy_fix_arrival_times
-            2. destroy_fix_variables
-            3. destroy_bonus
+    """Re-optimize vehicle routing and trip-route assignment using destroy-and-repair (LNS) ideas.
 
-        Attributes
-        ------------
-        destroy_method: DestroyMethod(Enum)
-            Method used for destruction in LNS algorithm
+    Includes three destroy methods:
+        1. destroy_fix_arrival_times
+        2. destroy_fix_variables
+        3. destroy_bonus
 
-        initial_solution : dictionary
-            contains initial values for decision variables.
+    Attributes:
+    ------------
+        destroy_method : DestroyMethod(Enum)
+            Method used for destruction in the LNS algorithm.
+        initial_solution : dict
+            Initial values for decision variables (X, Y, Z, U, assignment_dict).
 
-        Attributes from the parent class:
-        ------------
-        vehicle_request_assign: dictionary
-            a dictionary for each vehicle to keep track of various attributes associated with each vehicle
-            This dictionary allows for saving the assignments of trips to vehicles which is used to create
-            the route plan. it keeps the following data:
-
-                - vehicle: The vehicle object representing the specific vehicle in consideration.
-                - assigned_requests: A list containing the requests assigned to the vehicle.
-                - departure_stop: The last stop point of the vehicle in the previous iteration,
-                    which serves as the starting point for the current route plan.
-                - departure_time: The departure time from the departure stop point. This indicates
-                    when the vehicle is scheduled to depart from its starting point.
-                - last_stop: The last stop point assigned to the vehicle in the current solution.
-                - last_stop_time: The departure time from the last assigned stop in the current solution.
-                - assign_possible: A boolean value indicating whether it is possible to assign a trip to the vehicle.
-                    (This value may be updated dynamically within the "determine_available_vehicles" function.
-                    However, using this value is optional!)
+        vehicle_request_assign : Dict[int, VehicleState]
+            Mapping vehicle id to VehicleState (inherited from Solver). Each state holds: vehicle,
+            assigned_requests, departure_stop, departure_time, last_stop, last_stop_time, assign_possible,
+            random_number; used to save assignments and build route plans.
 
         durations : dictionary
             travel time matrix between possible stop points
@@ -67,19 +53,19 @@ class ReOptimizer(Solver):
 
 
     def re_optimizer(self, K, P_not_served, rejected_trips):
-        """
-        Function: Re-optimize the solution based on destroy and repair
-            Input:
-            ------------
-                K : set of vehicles
-                P_not_served : set of customers that are not served yet
-                rejected_trips: List of trips that are rejected in the optimization process.
+        """Re-optimize the solution using destroy and repair (LNS).
 
-            steps:
-            1. create the mathematical model in Gurobi
-            2. destroy (fix) a part of the current solution if it exists
-            3. repair (re-optimize) the solution using mip solver
-            4. save the final solution
+        Input:
+        ------------
+            K : set of vehicles
+            P_not_served : set of customers not yet served
+            rejected_trips : list of trips rejected in the optimization process.
+
+        Steps:
+            1. Create the mathematical model (OfflineSolver).
+            2. If initial_solution exists, destroy (fix) part of it according to destroy_method.
+            3. Repair (re-optimize) with the MIP solver and extract solution.
+            4. Save the final solution to initial_solution.
         """
 
         # Create and configure the offline model
@@ -108,13 +94,11 @@ class ReOptimizer(Solver):
         self.save_solution(offline_model)
 
     def save_solution(self, offline_model: OfflineSolver):
-        """
-        Function: Saves the solution from the offline model into the initial_solution attribute.
+        """Save the solution from the offline model into initial_solution.
 
-            Input:
-            ------------
-                offline_model: The Gurobi MIP model.
-
+        Input:
+        ------------
+            offline_model : OfflineSolver instance (Gurobi MIP model).
         """
         # Extracting values of decision variables
         self.Y: Dict[Any, Dict[Any, float]] = {
@@ -130,9 +114,9 @@ class ReOptimizer(Solver):
 
         assignment_dict: Dict[Any, Dict[str, List[Any]]] = {
             vehicle_id: {
-                'assigned_requests': assignment_info['assigned_requests']
+                'assigned_requests': state.assigned_requests
             }
-            for vehicle_id, assignment_info in self.vehicle_request_assign.items()
+            for vehicle_id, state in self.vehicle_request_assign.items()
         }
 
         self.initial_solution = {
@@ -144,47 +128,45 @@ class ReOptimizer(Solver):
         }
 
     def destroy_fix_arrival_times(self, P, offline_model: OfflineSolver) -> None:
-        """
-        Function: For each request in the initial solution, this function fixes its arrival time within
-            a time window of 2 min
+        """Fix pickup times to a time window around values in initial_solution (e.g. ±2 min).
 
-            Input:
-            ------------
-                P : set of customers to serve
-                offline_model: The Gurobi MIP model.
+        Input:
+        ------------
+            P : set of customers to serve
+            offline_model : OfflineSolver instance (Gurobi MIP model).
+
         """
         """you should write your code here ..."""
 
     def destroy_fix_variables(self, K, P, offline_model: OfflineSolver):
-        """
-        Function: Fix some of Y_var, X_var variables based on the initial solution
+        """ Fix some of Y_var, X_var variables based on the initial solution.
 
-            Input:
-            ------------
-                K : set of vehicles
-                P : set of customers to serve
-                offline_model: The Gurobi model to optimize.
+        Input:
+        ------------
+            K : set of vehicles
+            P : set of customers to serve
+            offline_model : OfflineSolver instance (Gurobi model).
 
-            Note:
-                - Forbid the arcs that goes from one request to another one that were in different vehicle
-                - Forbid the arcs that goes from departing node of a vehicle to other requests that were in different
+        Hint:
+            - Forbid the arcs that goes from one request to another one that were in different vehicle
+            - Forbid the arcs that goes from departing node of a vehicle to other requests that were in different
                   vehicle
         """
         """you should write your code here ..."""
 
 
     def destroy_bonus(self, K, P, offline_model: OfflineSolver):
-        """ Function: An arbitrary destroy method
+        """Custom destroy method
 
-            Input:
-            ------------
-                K : set of vehicles
-                P : set of customers to serve
-                offline_model: The Gurobi model to optimize.
+        Input:
+        ------------
+            K : set of vehicles
+            P : set of customers to serve
+            offline_model : OfflineSolver instance (Gurobi model).
 
-            Note:
-                - Include comments where necessary to explain your proposed function
-                - you can use any of the inputs if required
+        Hint:
+            - Include comments where necessary to explain your proposed function
+            - you can use any of the inputs if required
         """
         """you should write your code here ..."""
 
