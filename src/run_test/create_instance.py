@@ -4,15 +4,13 @@ import os
 import pickle
 from typing import Any, Dict
 import networkx as nx
-import numpy as np
 import pandas as pd
 from multimodalsim.simulator.vehicle import Vehicle
 from multimodalsim.simulator.stop import LabelLocation, Stop
 import random
 
 from src.utilities.create_scenario import create_random_requests
-from src.utilities.tools import find_shortest_paths, draw_network, get_durations, determine_cust_node_hour, \
-    print_dict_as_table
+from src.utilities.tools import find_shortest_paths, draw_network, get_durations, determine_cust_node_hour
 
 BASE_FOLDER = "data/Instances"
 GRAPH_FILE_PATH = os.path.join(BASE_FOLDER, "network.json")
@@ -25,15 +23,21 @@ MAX_SPEEDS_KMH = {
     3: 50.0    # Internal roads within main city and suburbs
 }
 
+# Constants for speed calculations
+SPEED_REDUCTION_FACTOR = 0.6  # 60% of max speed (accounts for traffic)
+KMH_TO_MS_CONVERSION = 3.6  # Convert km/h to m/s
+HOURLY_COST_RATE = 5.0  # $5 per hour
+SECONDS_PER_HOUR = 3600.0
+
 def get_speed_m_s(road_type):
     """
-    Get effective speed in m/s for a given road type, considering 60% speed adjustment.
+    Get effective speed in m/s for a given road type, considering speed reduction factor.
     """
     max_speed_kmh = MAX_SPEEDS_KMH.get(road_type, 0)
     if max_speed_kmh == 0:
         return 0  # Non-traversable road
-    effective_speed_kmh = max_speed_kmh * 0.6  # 60% of max speed
-    effective_speed_m_s = effective_speed_kmh / 3.6  # Convert to m/s
+    effective_speed_kmh = max_speed_kmh * SPEED_REDUCTION_FACTOR
+    effective_speed_m_s = effective_speed_kmh / KMH_TO_MS_CONVERSION
     return effective_speed_m_s
 
 def add_random_vehicles(
@@ -72,7 +76,7 @@ def add_random_vehicles(
         vehicle_id = str(start_ID + i)
 
         # Randomly select a stop ID ensuring it's within the network nodes
-        stop_id = str(np.random.randint(0, len(network.nodes)))
+        stop_id = str(random.randint(0, len(network.nodes) - 1))
         start_stop_location = LabelLocation(stop_id)
 
         # Calculate arrival and departure times
@@ -127,10 +131,10 @@ def save_vehicles_to_json(vehicles, save_file_path):
     """ Function: save list of vehicles in a json file
         Input:
         ------------
-            trips: List of trip objects or dictionaries.
+            vehicles: List of vehicle objects or dictionaries.
             save_file_path: String specifying the path to the output JSON file.
     """
-    # Convert trip objects to dictionaries
+    # Convert vehicle objects to dictionaries
     vehicle_data = []
     for vehicle in vehicles:
         vehicle_dict = {
@@ -148,8 +152,6 @@ def save_network_graph(network, file_path: str) -> None:
     """Save the graph with all its data to a file."""
     with open(f'{file_path}/network.pkl', 'wb') as f:
         pickle.dump(network, f)
-
-    f.close()
 
 
 def add_bidirectional_road(G, u_id, v_id, road_type):
@@ -172,7 +174,7 @@ def add_bidirectional_road(G, u_id, v_id, road_type):
     # Get effective speed in m/s
     speed = get_speed_m_s(road_type)
     duration = round(length / speed, 0)  # seconds
-    cost = round((duration / 3600.0) * 5.0, 2)  # $5 per hour
+    cost = round((duration / SECONDS_PER_HOUR) * HOURLY_COST_RATE, 2)
 
     # Add edge from u to v with roadType attribute
     G.add_edge(u, v, cost=cost, duration=duration, length=length, roadType=road_type)
@@ -288,7 +290,7 @@ def generate_urban_network(num_suburbs: int = 8, suburb_width: int = 4, city_wid
         cy = radius * math.sin(angle)
 
         suburb_offset = (suburb_width - 1) / 2.0
-        rotation_angle = np.random.randint(0,45)
+        rotation_angle = random.randint(0, 45)
         for i in range(suburb_width):
             for j in range(suburb_width):
                 node_id = suburb_coord_to_id(i, j, c)
@@ -409,7 +411,7 @@ def create_instances(config_data: Dict[str, Any]):
     # Extract durations from computed shortest_paths for request generation
     durations = get_durations(network)
 
-    draw_network(network, os.path.dirname("data/Instances/network.json"))
+    draw_network(network, os.path.dirname(GRAPH_FILE_PATH))
 
     # Dynamically generate test names
     instances = [
