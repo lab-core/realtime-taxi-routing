@@ -412,3 +412,78 @@ def number_scenarios(data_path, metrics):
     plt.show(block=False)  # Show plot without blocking the script
     plt.pause(2)  # Pause for 2 seconds
     plt.close()
+
+
+def multi_plot(data_path, metrics):
+    """
+    Two subplots for multi-objective scenarios:
+    - Row 1: first metric (x) vs second metric (y), one line per algorithm.
+    - Row 2: weight (x) vs '% of Service' (y), one line per algorithm.
+    """
+    if len(metrics) != 2:
+        raise ValueError("multi_plot expects exactly two metrics (x-axis, y-axis).")
+    x_metric, y_metric = metrics[0], metrics[1]
+
+    df = pd.read_csv(data_path)
+    df['Algorithms'] = df.apply(merge_algorithms_param, axis=1)
+
+    weight_col = 'weight' if 'weight' in df.columns else ('Weight profit' if 'Weight profit' in df.columns else None)
+    group_cols = ['Algorithms']
+    for c in ['Time window (min)', weight_col]:
+        if c and c in df.columns:
+            group_cols.append(c)
+    agg_cols = list(metrics) + (['% of Service'] if '% of Service' not in metrics and '% of Service' in df.columns else [])
+    grouped = df.groupby(group_cols)[agg_cols].mean().reset_index()
+
+    algorithms = grouped['Algorithms'].unique()
+    colors = sns.color_palette("gist_earth", n_colors=len(algorithms))
+
+    nrows = 2 if weight_col and '% of Service' in grouped.columns else 1
+    fig, axes = plt.subplots(nrows, 1, figsize=(6, 6.5), sharex=False)
+    if nrows == 1:
+        axes = [axes]
+
+    # Subplot 1: metric vs metric
+    ax0 = axes[0]
+    for alg, color in zip(algorithms, colors):
+        subset = grouped[grouped['Algorithms'] == alg].sort_values(by=x_metric)
+        ax0.plot(subset[x_metric], subset[y_metric], color=color, marker='o', linewidth=2, label=alg)
+
+    ax0.grid(axis='both', linestyle='dotted', color='darkgray', alpha=0.7)
+    ax0.set_xlabel(x_metric, fontsize=10, fontweight='bold')
+    ax0.set_ylabel(y_metric, fontsize=10, fontweight='bold')
+    x_min, x_max = grouped[x_metric].min(), grouped[x_metric].max()
+    y_min, y_max = grouped[y_metric].min(), grouped[y_metric].max()
+    x_step = (x_max - x_min) / 3 if x_max != x_min else 1
+    y_step = (y_max - y_min) / 3 if y_max != y_min else 1
+    ax0.set_xlim(max(0, x_min - 0.15 * x_step), x_max + 0.15 * x_step)
+    ax0.set_ylim(max(0, y_min - 0.3 * y_step), y_max + 0.3 * y_step)
+
+    # Subplot 2: weight (x) vs '% of Service' (y)
+    if nrows == 2:
+        ax1 = axes[1]
+        for alg, color in zip(algorithms, colors):
+            subset = grouped[grouped['Algorithms'] == alg].sort_values(by=weight_col)
+            ax1.plot(subset[weight_col], subset['% of Service'], color=color, marker='o', linewidth=2, label=alg)
+
+        ax1.grid(axis='both', linestyle='dotted', color='darkgray', alpha=0.7)
+        ax1.set_xlabel(weight_col, fontsize=10, fontweight='bold')
+        ax1.set_ylabel('% of Service', fontsize=10, fontweight='bold')
+        w_min, w_max = grouped[weight_col].min(), grouped[weight_col].max()
+        s_min, s_max = grouped['% of Service'].min(), grouped['% of Service'].max()
+        w_step = (w_max - w_min) / 3 if w_max != w_min else 1
+        s_step = (s_max - s_min) / 3 if s_max != s_min else 1
+        ax1.set_xlim(-0.05, 1.05)
+        ax1.set_ylim(max(0, s_min - 0.5 * s_step), s_max + 0.5 * s_step)
+
+    plt.tight_layout()
+    if nrows == 2:
+        plt.subplots_adjust(hspace=0.3)
+    base_filename = os.path.basename(data_path)
+    plot_prefix = base_filename.split('_')[0]
+    plot_filename = f"{plot_prefix}_plot_{len(metrics)}.png"
+    figure_path = os.path.join(os.path.dirname(data_path), plot_filename)
+    plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+    plt.show(block=False)
+    plt.pause(2)
+    plt.close()
