@@ -33,8 +33,21 @@ class OfflineSolver:
 
     def __init__(self,
                  network: Any,
-                 objective: Objectives
+                 objective: Objectives,
+                 weight: float = 0.5
                  ) -> None:
+        """
+        Initialize the OfflineSolver.
+
+        Input:
+        ------------
+        network: Any
+            The road network, including nodes representing stop points.
+        objective: Objectives
+            The objective used to evaluate the effectiveness of the plan.
+        weight: float, optional
+            Used only for MULTI_OBJECTIVE objective (ignored otherwise). Default 0.5.
+        """
         self.objective = objective
 
         self.objective_value = 0
@@ -53,23 +66,37 @@ class OfflineSolver:
         self.U_var: Dict[int, gp.Var] = {}  # Decision variables for departure times from customer locations
 
     def define_objective(self, K, P, vehicle_request_assign):
-        """Define the objective function based on the selected objective."""
+        """
+        Define the objective function based on the selected objective.
+
+        Input:
+        ------------
+        K: List[Any]
+            Set of vehicles.
+        P: List[Any]
+            Set of customers to serve.
+        vehicle_request_assign: Dict[int, VehicleState]
+            Dictionary mapping vehicle IDs to VehicleState objects containing vehicle-request assignments.
+        """
         if self.objective == Objectives.TOTAL_PROFIT:
             self.define_total_profit_objective(K, P, vehicle_request_assign)
         elif self.objective == Objectives.TOTAL_CUSTOMERS:
             self.define_total_customers_objective(P)
         elif self.objective == Objectives.WAIT_TIME:
             self.define_total_wait_time_objective(P)
+        elif self.objective == Objectives.MULTI_OBJECTIVE:
+            self.define_multi_objective(K, P, vehicle_request_assign)
         else:
             raise ValueError(f"Objective {self.objective} not recognized.")
 
     def define_total_customers_objective(self, P):
-        """ Function: define objective of maximizing the total number of served customers and add it to the model
+        """
+        Define objective of maximizing the total number of served customers and add it to the model.
+
         Input:
         ------------
-            P : set of customers to serve
-            model : The Gurobi model to optimize.
-            Z_var : Model variables
+        P: List[Any]
+            Set of customers to serve.
         """
         self.model.setObjective(
             sum(self.Z_var[f_i.id] for f_i in P),
@@ -77,36 +104,85 @@ class OfflineSolver:
         )
 
     def define_total_profit_objective(self, K, P, vehicle_request_assign):
-        """ Function: define objective of maximizing the total profit and add it to the model
+        """
+        Define objective of maximizing the total profit and add it to the model.
+
         Input:
         ------------
-            K : set of vehicles
-            P : set of customers to serve
-            vehicle_request_assign: dictionary containing vehicle-request assignments.
+        K: List[Any]
+            Set of vehicles.
+        P: List[Any]
+            Set of customers to serve.
+        vehicle_request_assign: Dict[int, VehicleState]
+            Dictionary mapping vehicle IDs to VehicleState objects containing vehicle-request assignments.
+
+        Hint:
+        ------------
+        - Access costs via self.costs[from_location][to_location]
+        - Access vehicle departure stop via vehicle_request_assign[vehicle_id].departure_stop
+        
         """
+
+        """you should write your objective here ..."""
         raise NotImplementedError("OfflineSolver.define_total_profit_objective() not implemented")
-        model.setObjective(
-            """you should write your objective here ..."""
-        )
+
 
     def define_total_wait_time_objective(self, P):
-        """ Function: define objective of minimizing the total wait time and add it to the model
+        """
+        Define objective of minimizing the total wait time and add it to the model.
+
         Input:
         ------------
-            P : set of customers to serve
+        P: List[Any]
+            Set of customers to serve.
+
+        Hint:
+        ------------
+        - Durations are given in seconds. Convert waiting time to minutes by dividing by 60.
+
         """
+
+        """you should write your objective here ..."""
         raise NotImplementedError("OfflineSolver.define_total_wait_time_objective() not implemented")
-        model.setObjective(
-            """you should write your objective here ..."""
-        )
+
+    def define_multi_objective(self, K, P, vehicle_request_assign):
+        """
+        Define weighted combined objective: maximize total profit and minimize wait time.
+
+        Input:
+        ------------
+        K: List[Any]
+            Set of vehicles.
+        P: List[Any]
+            Set of customers to serve.
+        vehicle_request_assign: Dict[int, VehicleState]
+            Dictionary mapping vehicle IDs to VehicleState objects containing vehicle-request assignments.
+
+        Hint:
+        ------------
+        - Access costs via self.costs[from_location][to_location]
+        - Access vehicle departure stop via vehicle_request_assign[vehicle_id].departure_stop
+        - Uses single weight w: objective = w * (total profit) - (1 - w) * (total wait time).
+        - Durations are given in seconds. Convert waiting time to minutes by dividing by 60.
+
+        """
+
+        """you should write your objective here ..."""
+        raise NotImplementedError("OfflineSolver.define_multi_objective() not implemented")
+
 
     def create_model(self, K, P, vehicle_request_assign):
-        """ Function: create model to solve with Gurobi Solver
-            Input:
-            ------------
-                K : set of vehicles
-                P : set of customers to serve
-                vehicle_request_assign: dictionary containing vehicle-request assignments.
+        """
+        Create model to solve with Gurobi Solver.
+
+        Input:
+        ------------
+        K: List[Any]
+            Set of vehicles.
+        P: List[Any]
+            Set of customers to serve.
+        vehicle_request_assign: Dict[int, VehicleState]
+            Dictionary mapping vehicle IDs to VehicleState objects containing vehicle-request assignments.
         """
 
         for f_i in P:
@@ -165,8 +241,9 @@ class OfflineSolver:
         # Constraints 6
         for f_i in P:
             for f_k in K:
-                T_ki = self.durations[vehicle_request_assign[f_k.id]['departure_stop']][f_i.origin.label]
-                delta = vehicle_request_assign[f_k.id]['departure_time'] + T_ki - f_i.ready_time
+                state = vehicle_request_assign[f_k.id]
+                T_ki = self.durations[state.departure_stop][f_i.origin.label]
+                delta = state.departure_time + T_ki - f_i.ready_time
                 self.model.addConstr(
                     self.U_var[f_i.id] >= f_i.ready_time + delta * self.Y_var[f_k.id, f_i.id],
                     name=f"Constraint6_{f_i.id}_{f_k.id}"
@@ -176,6 +253,11 @@ class OfflineSolver:
     def solve(self):
         """
         Optimize the model using Gurobi.
+
+        Note:
+        ------------
+        This method has no input parameters. It optimizes the model stored in self.model
+        and updates self.objective_value with the result.
         """
         self.model.optimize()
 
@@ -187,32 +269,37 @@ class OfflineSolver:
 
     def extract_solution(self, K, P, rejected_trips, vehicle_request_assign):
         """
-        Function: Extract the solution from the optimized model and Retrieve the variable values
-                    convert solution to vehicle_request_assign dictionary which is required to determine the route plan
-            Input:
-            ------------
-                K : set of vehicles
-                P : set of customers to serve
-                rejected_trips : List of trips that are rejected in the optimization process.
-                vehicle_request_assign: dictionary containing vehicle-request assignments.
+        Extract the solution from the optimized model and convert it to vehicle_request_assign format.
 
-            Output:
-            ------------
-                model.objVal: The objective value of the optimized model
+        Input:
+        ------------
+        K: List[Any]
+            Set of vehicles.
+        P: List[Any]
+            Set of customers to serve.
+        rejected_trips: List[Any]
+            List of trips that are rejected in the optimization process (will be populated by this method).
+        vehicle_request_assign: Dict[int, VehicleState]
+            Dictionary mapping vehicle IDs to VehicleState objects (will be populated with assignments by this method).
 
+        Note:
+        ------------
+        - Adds trips to vehicle_request_assign[vehicle_id].assigned_requests
+        - Adds unserved trips (Z_var < 0.5) to rejected_trips
         """
 
         # Extract the solution and populate the vehicle_request_assign and rejected_trips
         for f_k in K:
             for trip in P:
                 if self.Y_var[f_k.id, trip.id].X > 0.5:
-                    vehicle_request_assign[f_k.id]['assigned_requests'].append(trip)
+                    state = vehicle_request_assign[f_k.id]
+                    state.assigned_requests.append(trip)
                     current_trip = trip
                     while True:
                         next_trip_found = False
                         for f_j in P:
                             if current_trip != f_j and self.X_var[current_trip.id, f_j.id].X > 0.5:
-                                vehicle_request_assign[f_k.id]['assigned_requests'].append(f_j)
+                                state.assigned_requests.append(f_j)
                                 current_trip = f_j
                                 next_trip_found = True
                                 break
@@ -225,13 +312,18 @@ class OfflineSolver:
 
     def offline_solver(self, K, P, vehicle_request_assign, rejected_trips):
         """
-        Function:  solve the taxi routing problem using a MIP solver (Gurobi).
-            Input:
-            ------------
-                K : set of vehicles
-                P : set of customers to serve
-                vehicle_request_assign: dictionary containing vehicle-request assignments.
-                rejected_trips : List of trips that are rejected in the optimization process.
+        Solve the taxi routing problem using a MIP solver (Gurobi).
+
+        Input:
+        ------------
+        K: List[Any]
+            Set of vehicles.
+        P: List[Any]
+            Set of customers to serve.
+        vehicle_request_assign: Dict[int, VehicleState]
+            Dictionary mapping vehicle IDs to VehicleState objects containing vehicle-request assignments.
+        rejected_trips: List[Any]
+            List of trips that are rejected in the optimization process (will be populated by this method).
         """
         self.create_model(K, P, vehicle_request_assign)
         self.define_objective(K, P, vehicle_request_assign)
