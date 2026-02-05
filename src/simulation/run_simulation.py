@@ -44,6 +44,8 @@ def run_taxi_simulation(
     print(f"  Percentage Known (%): {config.known_portion}")
     print(f"  Advance Notice (min): {config.advance_notice}")
     print(f"  Time Window (min): {config.time_window}")
+    if "weight" in config.algorithm_params:
+        print(f"  Weight: {config.algorithm_params.get('weight', 0.5)}")
 
     if config.algorithm in [Algorithm.CONSENSUS]:
         print(f"  Number of Scenarios: {config.algorithm_params["nb_scenario"]}")
@@ -94,11 +96,19 @@ def run_taxi_simulation(
 
     # Extract and process simulation output
     output_dict = dispatcher.extract_output()
-    unique_key = "__".join([
-            os.path.basename(test_folder),
-            str(config.time_window),
-            str(output_dict['Objective type'])
-        ])
+    # Build a shorter, compact key: <instance>_<tw>_<obj_abbr>
+    obj_type = str(output_dict['Objective type'])
+    obj_abbr_map = {
+        "total_profit": "tp",
+        "total_revenue": "tr",
+        "total_cost": "tc",
+        "total_customers": "nc",
+        "waiting_time": "wt",
+        "total_empty_travel_time": "et",
+        "multi_objective": "mo",
+    }
+    obj_abbr = obj_abbr_map.get(obj_type, obj_type[:3])
+    unique_key = f"{os.path.basename(test_folder)}_{config.time_window}_{obj_abbr}"
 
     # Compile information about the test and results
     info_dict = {
@@ -107,8 +117,6 @@ def run_taxi_simulation(
         '# Trips': len(trips),
         '# Vehicles': len(vehicles),
         'Solution Mode': config.solution_mode.value,
-#        'Known portion (%)': config.known_portion,
-#        'Advance Notice (min)': config.advance_notice,
         'Time window (min)': config.time_window
     }
     if config.solution_mode == SolutionMode.PARTIAL_ONLINE:
@@ -122,15 +130,19 @@ def run_taxi_simulation(
     if config.algorithm == Algorithm.RE_OPTIMIZE:
         info_dict.update({'Destroy Method': config.algorithm_params["destroy_method"].value})
 
+    if "weight" in config.algorithm_params:
+        info_dict.update({'weight': config.algorithm_params.get('weight', 0.5)})
+
     if config.solution_mode != SolutionMode.OFFLINE:
         Results_folder = os.path.join(os.path.dirname(test_folder), "Results")
         Offline_Solution_path = os.path.join(Results_folder, "TP1_simulation_results.csv")
         if os.path.exists(Offline_Solution_path):
             offline_df = pd.read_csv(Offline_Solution_path, index_col='Key')
-            offline_value = offline_df.loc[unique_key, 'Objective value']
-            competitive_ratio = round(output_dict['Objective value'] / offline_value, 2) if\
-                offline_value != 0 else 0
-            info_dict.update({'Competitive Ratio': competitive_ratio})
+            if unique_key in offline_df.index:
+                offline_value = offline_df.loc[unique_key, 'Objective value']
+                competitive_ratio = round(output_dict['Objective value'] / offline_value, 2) if\
+                    offline_value != 0 else 0
+                info_dict.update({'Competitive Ratio': competitive_ratio})
 
 
 

@@ -1,47 +1,47 @@
 [
     {
         "id": "0",
-        "initPos": "106",
+        "initPos": "55",
         "initTime": 0
     },
     {
         "id": "1",
-        "initPos": "4",
+        "initPos": "43",
         "initTime": 0
     },
     {
         "id": "2",
-        "initPos": "53",
+        "initPos": "84",
         "initTime": 0
     },
     {
         "id": "3",
-        "initPos": "58",
+        "initPos": "159",
         "initTime": 0
     },
     {
         "id": "4",
-        "initPos": "128",
+        "initPos": "47",
         "initTime": 0
     },
     {
         "id": "5",
-        "initPos": "180",
+        "initPos": "90",
         "initTime": 0
     },
     {
         "id": "6",
-        "initPos": "49",
+        "initPos": "120",
         "initTime": 0
     },
     {
         "id": "7",
-        "initPos": "112",
+        "initPos": "178",
         "initTime": 0
     },
     {
         "id": "8",
-        "initPos": "10",
+        "initPos": "75",
         "initTime": 0
     },
     {
@@ -51,52 +51,77 @@
     },
     {
         "id": "10",
-        "initPos": "51",
+        "initPos": "115",
         "initTime": 0
     },
     {
         "id": "11",
-        "initPos": "82",
+        "initPos": "120",
         "initTime": 0
     },
     {
         "id": "12",
-        "initPos": "179",
+        "initPos": "166",
         "initTime": 0
     },
     {
         "id": "13",
-        "initPos": "40",
+        "initPos": "107",
         "initTime": 0
     },
     {
         "id": "14",
-        "initPos": "181",
+        "initPos": "143",
         "initTime": 0
     },
     {
         "id": "15",
-        "initPos": "38",
+        "initPos": "15",
         "initTime": 0
     },
     {
         "id": "16",
-        "initPos": "62",
+        "initPos": "87",
         "initTime": 0
     },
     {
         "id": "17",
-        "initPos": "24",
+        "initPos": "22",
         "initTime": 0
     },
     {
         "id": "18",
-        "initPos": "162",
+        "initPos": "121",
         "initTime": 0
     },
     {
         "id": "19",
-        "initPos": "140",
+        "initPos": "63",
+        "initTime": 0
+    },
+    {
+        "id": "20",
+        "initPos": "4",
+        "initTime": 0
+    },
+    {
+        "id": "21",
+        "initPos": "111",
+        "initTime": 0
+    },
+    {
+        "id": "22",
+        "initPos": "142",
+        "initTime": 0
+    },
+    {
+        "id": "23",
+        "initPos": "148",
+        "initTime": 0
+    },
+    {
+        "id": "24",
+        "initPos": "65",
         "initTime": 0
     }
 ]

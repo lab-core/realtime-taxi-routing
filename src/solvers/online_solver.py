@@ -11,29 +11,17 @@ logger = logging.getLogger(__name__)
 
 class OnlineSolver(Solver):
     """Provide online solution to optimize the vehicle routing and the trip-route assignment. This
-        method includes:
-            1. greedy solver
-            2. random solver
-            3. ranking solver
+    method includes:
+        1. greedy solver
+        2. random solver
+        3. ranking solver
 
-        Attributes from the parent class:
-        ------------
-        vehicle_request_assign: dictionary
-            a dictionary for each vehicle to keep track of various attributes associated with each vehicle
-            This dictionary allows for saving the assignments of trips to vehicles which is used to create
-            the route plan. it keeps the following data:
-
-                - vehicle: The vehicle object representing the specific vehicle in consideration.
-                - assigned_requests: A list containing the requests assigned to the vehicle.
-                - departure_stop: The last stop point of the vehicle in the previous iteration,
-                    which serves as the starting point for the current route plan.
-                - departure_time: The departure time from the departure stop point. This indicates
-                    when the vehicle is scheduled to depart from its starting point.
-                - last_stop: The last stop point assigned to the vehicle in the current solution.
-                - last_stop_time: The departure time from the last assigned stop in the current solution.
-                - assign_possible: A boolean value indicating whether it is possible to assign a trip to the vehicle.
-                    (This value may be updated dynamically within the "determine_available_vehicles" function.
-                    However, using this value is optional!)
+    Attributes:
+    ------------
+        vehicle_request_assign : Dict[int, VehicleState]
+            Mapping vehicle id to VehicleState (inherited from Solver). Each state holds: vehicle,
+            assigned_requests, departure_stop, departure_time, last_stop, last_stop_time, assign_possible,
+            random_number; used to save assignments and build route plans.
 
         durations : dictionary
             travel time matrix between possible stop points
@@ -67,35 +55,35 @@ class OnlineSolver(Solver):
                  simulation_config: SimulationConfig):
         super().__init__(network, vehicles, simulation_config)
         # Assign random numbers to each vehicle request assignment
-        for veh_id, temp_dict in self.vehicle_request_assign.items():
-            temp_dict['random_number'] = random.random()
+        for veh_id, state in self.vehicle_request_assign.items():
+            state.random_number = random.random()
 
     def determine_available_vehicles(self, trip):
-        """ Function: determine the possibility of assigning a trip to vehicles
-            Input:
-            ------------
-                trip : ride request to serve
-            Hint:
-                - you can use self.vehicle_request_assign dictionary for information about the vehicles
-                - you can use functions from the parent class (Solver)
+        """Determine whether each vehicle can feasibly serve the trip (e.g. reach pickup by latest_pickup).
 
+        Input:
+        ------------
+            trip : ride request to serve
+
+        Hint:
+            - Iterate over self.vehicle_request_assign and set assign_possible for each vehicle.
+            - Use the parent class method calc_reach_time(veh_info, trip).
         """
         """you should write your code here ..."""
 
 
     def online_solver(self, K, P_not_assigned, rejected_trips):
-        """
-        Function: find a solution to assign ride requests to vehicles after arrival
+        """Find a solution to assign ride requests to vehicles after arrival.
 
-            Input:
-            ------------
-                K : set of vehicles
-                P_not_assigned : set of customers that are not assigned to be served
-                rejected_trips: List of trips that are rejected in the optimization process.
+        Input:
+        ------------
+            K : set of vehicles
+            P_not_assigned : set of customers that are not assigned to be served
+            rejected_trips : list of trips rejected in the optimization process.
 
-            steps:
-            1. assign requests to the vehicles/ routes based on the chosen algorithm
-            2. check the feasibility of then solution
+        Steps:
+            1. Assign requests to vehicles/routes based on the chosen algorithm.
+            2. Check the feasibility of the solution.
         """
 
         # Step 1: assign requests to the vehicles/ routes
@@ -123,27 +111,24 @@ class OnlineSolver(Solver):
             raise ValueError("The solution is not feasible")
 
     def greedy_assign(self, P_not_assigned: List[Any], rejected_trips: List[Any]) -> List[Any]:
-        """
-        Function: find a solution based on greedy method to assign ride requests to vehicles after arrival
+        """Assign ride requests to vehicles using a greedy method (e.g. best objective per request).
 
-            Input:
-            ------------
-                P_not_assigned : set of customers that are not assigned to be serve
-                rejected_trips: List of trips that are rejected in the optimization process.
+        Input:
+        ------------
+            P_not_assigned : set of customers that are not assigned to be served
+            rejected_trips : list of trips rejected in the optimization process.
 
-            Output:
-            ------------
-                assigned_requests: List of assigned requests
+        Output:
+        ------------
+            assigned_requests : list of assigned requests
 
-            Hint:
-                - for each trip in P_not_assigned you have to select a vehicle to assign or reject the request
-                - evaluating the feasibility of assigning a trip to a vehicle should be done inside
-                  "determine_available_vehicles" function
-                - If no vehicle is available for a task, add it to the rejected_trips list
-                - if a vehicle is selected to assign a request:
-                    - Use the assign_trip_to_vehicle function from Solver class to assign the task to the selected vehicle
-                    - add trip to the list of assigned_requests
-
+        Hint:
+            - for each trip in P_not_assigned you have to select a vehicle to assign or reject the request.
+            - evaluating the feasibility of assigning a trip to a vehicle should be done inside "determine_available_vehicles" function.
+            - If no vehicle is available, append the trip to rejected_trips.
+            - if a vehicle is selected to assign a request:
+                - Use the assign_trip_to_vehicle function to assign the task to the selected vehicle
+                - add trip to the list of assigned_requests
         """
         # for each request find the best insertion position
         assigned_requests = []
@@ -154,23 +139,21 @@ class OnlineSolver(Solver):
         return assigned_requests
 
     def random_assign(self, P_not_assigned: List[Any], rejected_trips: List[Any]) -> List[Any]:
-        """
-        Function: find a solution based on random method to assign ride requests to vehicles after arrival
+        """Assign ride requests to vehicles based on random solution method
 
         Input:
         ------------
-            P_not_assigned : set of customers that are not assigned to be serve
-            rejected_trips: List of trips that are rejected in the optimization process.
+            P_not_assigned : set of customers that are not assigned to be served
+            rejected_trips : list of trips rejected in the optimization process.
 
         Output:
         ------------
-            assigned_requests: List of assigned requests
+            assigned_requests : list of assigned requests
 
         Hint:
-            - for each trip in P_not_assigned you have to select a vehicle to assign or reject the request
-            - evaluating the feasibility of assigning a trip to a vehicle should be done inside
-              "determine_available_vehicles" function
-            - If no vehicle is available for a task, add it to the rejected_trips list
+            - for each trip in P_not_assigned you have to select a vehicle to assign or reject the request.
+            - evaluating the feasibility of assigning a trip to a vehicle should be done inside "determine_available_vehicles" function.
+            - If no vehicle is available, append the trip to rejected_trips.
             - if a vehicle is selected to assign a request:
                 - Use the assign_trip_to_vehicle function to assign the task to the selected vehicle
                 - add trip the list of assigned_requests
@@ -184,22 +167,21 @@ class OnlineSolver(Solver):
         return assigned_requests
 
     def ranking_assign(self, P_not_assigned: List[Any], rejected_trips: List[Any]) -> List[Any]:
-        """
-        Function: find a solution based on ranking method to assign ride requests to vehicles after arrival
+        """Assign ride requests to vehicles by ranking solution method.
+
         Input:
         ------------
-            P_not_assigned : set of customers that are not assigned to be serve
-            rejected_trips: List of trips that are rejected in the optimization process.
+            P_not_assigned : set of customers that are not assigned to be served
+            rejected_trips : list of trips rejected in the optimization process.
 
         Output:
         ------------
-            assigned_requests: List of assigned requests
+            assigned_requests : list of assigned requests
 
         Hint:
-            - for each trip in P_not_assigned you have to select a vehicle to assign or reject the request
-            - evaluating the feasibility of assigning a trip to a vehicle should be done inside
-              "determine_available_vehicles" function
-            - If no vehicle is available for a task, add it to the rejected_trips list
+            - for each trip in P_not_assigned you have to select a vehicle to assign or reject the request.
+            - evaluating the feasibility of assigning a trip to a vehicle should be done inside "determine_available_vehicles" function.
+            - If no vehicle is available, append the trip to rejected_trips.
             - if a vehicle is selected to assign a request:
                 - Use the assign_trip_to_vehicle function to assign the task to the selected vehicle
                 - add trip the list of assigned_requests

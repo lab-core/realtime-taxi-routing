@@ -8,46 +8,32 @@ from src.utilities.config import SimulationConfig
 
 
 class StochasticSolver(Solver):
-    """
-    Provide online stochastic solution to optimize the vehicle routing and the trip-route assignment.
-    It uses scenario generation and then solves each scenario with an offline solver.
-    Two type of consensus algorithm are defined:
-        - qualitative: Increment a counter for the best request in each scenario.
-        - quantitative: Credit the best request with the optimal solution value.
+    """Online stochastic solution: scenario generation plus offline solve per scenario.
 
-        Attributes
-        ------------
-        consensus_type: ConsensusParams(Enum)
-            The type of consensus algorithm
-        nb_scenario: int
-                Total number of scenarios that are possible to solve at each time
-        scenario_param: Dict[str, Any]
-            parameters used in generating scenarios
+    Two types of consensus:
+        - qualitative: aggregate which request is “best” across scenarios (e.g. by voting).
+        - quantitative: use scenario objective values to score best request–vehicle assignments.
 
-        Attributes from the parent class:
-        ------------
-        a dictionary for each vehicle to keep track of various attributes associated with each vehicle
-            This dictionary allows for saving the assignments of trips to vehicles which is used to create
-            the route plan. it keeps the following data:
+    Attributes:
+    ------------
+        consensus_type : ConsensusParams(Enum)
+            Type of consensus algorithm.
+        nb_scenario : int
+            Number of scenarios to generate and solve at each step.
+        scenario_param : Dict[str, Any]
+            Parameters for scenario generation (time_window, cust_node_hour, known_portion, advance_notice).
 
-                - vehicle: The vehicle object representing the specific vehicle in consideration.
-                - assigned_requests: A list containing the requests assigned to the vehicle.
-                - departure_stop: The last stop point of the vehicle in the previous iteration,
-                    which serves as the starting point for the current route plan.
-                - departure_time: The departure time from the departure stop point. This indicates
-                    when the vehicle is scheduled to depart from its starting point.
-                - last_stop: The last stop point assigned to the vehicle in the current solution.
-                - last_stop_time: The departure time from the last assigned stop in the current solution.
-                - assign_possible: A boolean value indicating whether it is possible to assign a trip to the vehicle.
-                    (This value may be updated dynamically within the "determine_available_vehicles" function.
-                    However, using this value is optional!)
+        vehicle_request_assign : Dict[int, VehicleState]
+            Mapping vehicle id to VehicleState (inherited from Solver). Each state holds: vehicle,
+            assigned_requests, departure_stop, departure_time, last_stop, last_stop_time, assign_possible,
+            random_number; used to save assignments and build route plans.
 
-        network: Any
+        network : Any
             The road network, including nodes representing stop points.
-        durations : dictionary
-            travel time matrix between possible stop points
-        costs: dictionary
-            driving costs
+        durations : Dict
+            Travel time matrix between stop points (e.g. self.durations[from_label][to_label]).
+        costs : Dict
+            Driving cost matrix (same structure as durations).
         algorithm: Algorithm(Enum)
             The optimization algorithm utilized for planning and assigning trips to vehicles.
         objective: Objectives(Enum)
@@ -75,13 +61,13 @@ class StochasticSolver(Solver):
 
 
     def stochastic_solver(self, K, P_not_assigned, current_time):
-        """
-        Function: find a solution to assign ride requests to vehicles after arrival
-            Input:
-            ------------
-                K : set of vehicles
-                P_not_assigned : set of customers that are not assigned to be served
-                current_time: current time of the system which is used to generate scenarios
+        """Assign ride requests to vehicles using scenario-based consensus.
+
+        Input:
+        ------------
+            K : set of vehicles
+            P_not_assigned : set of customers not yet assigned to be served
+            current_time : current time (used for scenario generation).
         """
 
         # Step 1: assign requests to the vehicles/ routes
@@ -94,7 +80,7 @@ class StochasticSolver(Solver):
         elif self.consensus_type == ConsensusParams.QUALITATIVE:
             assigned_requests = self.qualitative_consensus(K, P_not_assigned, current_time)
 
-        # Step 2: check the feasibility of then solution
+        # Step 2: check the feasibility of the solution
         self.create_online_solution()
         if self.verify_constraints(K, assigned_requests):
             self.calc_objective_value(K, P_not_assigned)
@@ -104,25 +90,23 @@ class StochasticSolver(Solver):
             raise ValueError("The solution is not feasible")
 
     def qualitative_consensus(self, K, P_not_assigned, current_time):
-        """
-        Function: find a solution based on consensus method to assign ride requests to vehicles after arrival.
+        """Assign requests using qualitative consensus over scenario solutions.
 
-            Input:
-            ------------
-                P_not_assigned : set of customers that are not assigned to be served
-                K : set of vehicles
-                current_time: current time of the system which is used to generate scenarios
+        Input:
+        ------------
+            K : set of vehicles
+            P_not_assigned : set of customers not yet assigned to be served
+            current_time : current time (for scenario generation).
 
-            Output:
-            ------------
-                assigned_requests: List of assigned requests
+        Output:
+        ------------
+            assigned_requests : list of assigned requests.
 
-            Hint:
-                - you should use create_random_requests function in the create_scenario.py to generate scenarios
-                - use functions in offline_solver.py to solve the problem for each scenario
-                - assign one request at a time to vehicles
-                - you should count the number of times a request is assigned to a vehicle
-
+        Hint:
+            - Generate multiple scenarios (use create_random_requests from create_scenario.py) and solve each with OfflineSolver.
+            - Use the scenario solutions to decide which request to assign to which vehicle (e.g. aggregate
+              information across scenarios).
+            - Assign one request at a time and update vehicle state before the next.
         """
         assigned_requests = []
         """you should write your code here ..."""
@@ -131,24 +115,23 @@ class StochasticSolver(Solver):
 
 
     def quantitative_consensus(self, K, P_not_assigned, current_time):
-        """
-        Function: find a solution based on consensus method to assign ride requests to vehicles after arrival.
+        """Assign requests using quantitative consensus (score by scenario objective values).
 
-            Input:
-            ------------
-                K : set of vehicles
-                P_not_assigned : set of customers that are not assigned to be served
-                current_time: current time of the system which is used to generate scenarios
+        Input:
+        ------------
+            K : set of vehicles
+            P_not_assigned : set of customers not yet assigned to be served
+            current_time : current time (for scenario generation).
 
-            Output:
-            ------------
-                assigned_requests: List of assigned requests
+        Output:
+        ------------
+            assigned_requests : list of assigned requests.
 
-            Hint:
-                - you should use create_random_requests function in the create_scenario.py to generate scenarios
-                - use functions in offline_solver.py to solve the problem for each scenario
-                - assign one request at a time to vehicles
-                - you should credit the value of optimal solution for a request that is assigned to a vehicle
+        Hint:
+            - Generate multiple scenarios (use create_random_requests from create_scenario.py) and solve each with OfflineSolver.
+            - Use each scenario’s objective value to score or rank request–vehicle options; then choose
+              assignments.
+            - Assign one request at a time and update vehicle state before the next.
         """
         assigned_requests = []
         """you should write your code here ..."""

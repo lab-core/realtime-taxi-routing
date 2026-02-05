@@ -6,10 +6,15 @@ class Objectives(Enum):
         - total_Profit: total profit of served requests
         - waiting_time: total wait time of served requests
         - total_customers: total number of served customers
+        - multi_objective: weighted sum of total profit and negative total wait time
     """
     TOTAL_PROFIT = "total_profit"
+    TOTAL_REVENUE = "total_revenue"
+    TOTAL_COST = "total_cost"
     TOTAL_CUSTOMERS = "total_customers"
     WAIT_TIME = "waiting_time"
+    TOTAL_EMPTY_TRAVEL_TIME = "total_empty_travel_time"
+    MULTI_OBJECTIVE = "multi_objective"
 
 
 class SolutionMode(Enum):

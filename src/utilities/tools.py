@@ -45,11 +45,11 @@ def determine_cust_node_hour(instance_name: str) -> float:
         float: The cust_node_hour value.
     """
     if instance_name.startswith("1-Low"):
-        return 0.3
+        return 0.4
     elif instance_name.startswith("2-Med"):
-        return 0.5
+        return 0.6
     elif instance_name.startswith("3-High"):
-        return 0.7
+        return 0.8
     else:
         raise ValueError(f"Unknown instance prefix in '{instance_name}'")
 
