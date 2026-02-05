@@ -13,6 +13,19 @@ GRAPH_FILE_PATH = os.path.join(BASE_FOLDER, "network.json")
 RESULTS_FOLDER = os.path.join(BASE_FOLDER, "Results")
 os.makedirs(RESULTS_FOLDER, exist_ok=True)
 
+# Constants for solution mode defaults
+KNOWN_PORTION_OFFLINE = 100
+KNOWN_PORTION_ONLINE = 0
+ADVANCE_NOTICE_DEFAULT = 30  # minutes
+ADVANCE_NOTICE_NONE = 0
+DEFAULT_NB_SCENARIO = 10
+
+# Scenario group mappings
+SCENARIO_GROUPS = {
+    "TP4": ["TP4_CONSENSUS", "TP4_GREEDY"],
+    "TP2": ["TP2_1", "TP2_2"],
+}
+
 def run_single_test(config_data: Dict[str, Any]):
     """Runs a single test based on configuration."""
     test_folder = config_data["instances"]
@@ -36,31 +49,22 @@ def run_scenarios(part: str, SCENARIOS: Dict[str, Dict[str, Any]]):
     Runs scenarios based on the provided part.
     If part is a group (e.g., TP2), it runs all associated sub-scenarios.
     """
-    if part == "TP4":
-        # Combine both TP4_CONSENSUS and TP4_GREEDY scenarios
-        scenario_consensus = SCENARIOS.get("TP4_CONSENSUS", {})
-        scenario_greedy = SCENARIOS.get("TP4_GREEDY", {})
-
-        combinations_consensus = generate_combinations(scenario_consensus)
-        combinations_greedy = generate_combinations(scenario_greedy)
-
-        all_combinations = combinations_consensus + combinations_greedy
-    elif part == "TP2":
-        # Combine TP2_1 and TP2_2 scenarios
-        scenario_part_1 = SCENARIOS.get("TP2_1", {})
-        scenario_part_2 = SCENARIOS.get("TP2_2", {})
-
-        combinations_part_1 = generate_combinations(scenario_part_1)
-        combinations_part_2 = generate_combinations(scenario_part_2)
-
-        all_combinations = combinations_part_1 + combinations_part_2
+    if part in SCENARIO_GROUPS:
+        # Handle grouped scenarios (e.g., TP4, TP2)
+        group_scenarios = SCENARIO_GROUPS[part]
+        all_combinations = []
+        for group_scenario in group_scenarios:
+            scenario = SCENARIOS.get(group_scenario, {})
+            if scenario:
+                all_combinations.extend(generate_combinations(scenario))
     elif part in SCENARIOS:
         # Single scenario
         scenario = SCENARIOS[part]
         all_combinations = generate_combinations(scenario)
     else:
         logging.error(f"Scenario part '{part}' is not defined.")
-        print(f"Invalid scenario part. Please choose from: {', '.join(SCENARIOS.keys())}")
+        available = list(SCENARIOS.keys()) + list(SCENARIO_GROUPS.keys())
+        print(f"Invalid scenario part. Please choose from: {', '.join(available)}")
         return
 
     logging.info(f"Running scenarios for {part}")
@@ -125,6 +129,7 @@ def generate_combinations(params: Dict[str, Any]) -> List[Dict[str, Any]]:
                 algo_dict = dict(zip(algorithm_param_keys, algo_comb))
                 all_combinations.append({**base_dict, **algo_dict})
     else:
+        # Simple case: generate all combinations without nested algorithm_params
         all_combinations = [
             dict(zip(keys, combination))
             for combination in itertools.product(*values)
@@ -140,22 +145,23 @@ def create_simulation_config(comb: Dict[str, Any]) -> SimulationConfig:
         algorithm_enum = match_enum(comb["algorithms"], Algorithm)
         solution_mode_enum = match_enum(comb["solution_mode"], SolutionMode)
         if solution_mode_enum == SolutionMode.OFFLINE:
-            known_portion = 100
-            advance_notice = 0
+            known_portion = KNOWN_PORTION_OFFLINE
+            advance_notice = ADVANCE_NOTICE_NONE
         elif solution_mode_enum == SolutionMode.FULLY_ONLINE:
-            known_portion = 0
-            advance_notice = 0
+            known_portion = KNOWN_PORTION_ONLINE
+            advance_notice = ADVANCE_NOTICE_NONE
         elif solution_mode_enum == SolutionMode.PARTIAL_ONLINE:
             known_portion = comb["known_portion"]
-            advance_notice = 0
+            advance_notice = ADVANCE_NOTICE_NONE
         elif solution_mode_enum == SolutionMode.ADVANCE_NOTICE:
-            known_portion = 0
-            advance_notice = 30
+            known_portion = KNOWN_PORTION_ONLINE
+            advance_notice = ADVANCE_NOTICE_DEFAULT
         else:
             known_portion = comb["known_portion"]
-            advance_notice = 30
+            advance_notice = ADVANCE_NOTICE_DEFAULT
     except ValueError as e:
-        print(f"Error creating SimulationConfig object - {e}")
+        logging.error(f"Error creating SimulationConfig object - {e}")
+        raise
 
     config = SimulationConfig(
         objective=objective_enum,
@@ -168,13 +174,16 @@ def create_simulation_config(comb: Dict[str, Any]) -> SimulationConfig:
 
     if algorithm_enum == Algorithm.CONSENSUS:
         consensus_param_enum = match_enum(comb["consensus_params"], ConsensusParams)
-        config.algorithm_params["nb_scenario"] = comb.get("nb_scenario", 10)
+        config.algorithm_params["nb_scenario"] = comb.get("nb_scenario", DEFAULT_NB_SCENARIO)
         config.algorithm_params["consensus_param"] = consensus_param_enum
         config.algorithm_params["cust_node_hour"] = determine_cust_node_hour(comb["instances"])
 
     if algorithm_enum == Algorithm.RE_OPTIMIZE:
         dest_method_enum = match_enum(comb["destroy_method"], DestroyMethod)
         config.algorithm_params["destroy_method"] = dest_method_enum
+
+    # Weight for multi-objective (profit vs wait ime); used when objective is MULTI_OBJECTIVE
+    config.algorithm_params["weight"] = comb.get("weight", 1)
 
     return config
 
