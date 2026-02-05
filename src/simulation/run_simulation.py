@@ -138,10 +138,11 @@ def run_taxi_simulation(
         Offline_Solution_path = os.path.join(Results_folder, "TP1_simulation_results.csv")
         if os.path.exists(Offline_Solution_path):
             offline_df = pd.read_csv(Offline_Solution_path, index_col='Key')
-            offline_value = offline_df.loc[unique_key, 'Objective value']
-            competitive_ratio = round(output_dict['Objective value'] / offline_value, 2) if\
-                offline_value != 0 else 0
-            info_dict.update({'Competitive Ratio': competitive_ratio})
+            if unique_key in offline_df.index:
+                offline_value = offline_df.loc[unique_key, 'Objective value']
+                competitive_ratio = round(output_dict['Objective value'] / offline_value, 2) if\
+                    offline_value != 0 else 0
+                info_dict.update({'Competitive Ratio': competitive_ratio})
 
 
 
