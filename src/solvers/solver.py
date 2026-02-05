@@ -391,6 +391,8 @@ class Solver:
             """you should write your code here ..."""
         elif self.objective == Objectives.WAIT_TIME:
             """you should write your code here ..."""
+        elif self.objective == Objectives.MULTI_OBJECTIVE:
+            """you should write your code here ..."""
 
         self.objective_value = value
 
