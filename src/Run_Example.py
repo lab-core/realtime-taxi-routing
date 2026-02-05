@@ -60,6 +60,7 @@ def parse_arguments() -> tuple[str, SimulationConfig]:
                               "- total_profit: Maximizes the total profit of served requests.\n"
                               "- waiting_time: Minimizes the total wait time of served requests.\n"
                               "- total_customers: Maximizes the total number of served customers.\n"
+                              "- multi_objective: Weighted combination of profit and wait time (use -wp for weight).\n"
                               "Default: total_customers"))
 
     parser.add_argument("-a", "--algorithm", type=str, default="mip_solver",
@@ -113,6 +114,9 @@ def parse_arguments() -> tuple[str, SimulationConfig]:
                               "- bonus: arbitrary destroy method as bonus\n"
                               "Default: default"))
 
+    parser.add_argument("-wp", "--weight", type=float, default=1,
+                        help=("Weight w in [0, 1] for profit in multi-objective. Default: 0.5"))
+
     args = parser.parse_args()
 
     # Map string inputs to enums
@@ -158,6 +162,8 @@ def parse_arguments() -> tuple[str, SimulationConfig]:
 
     if algorithm_enum == Algorithm.RE_OPTIMIZE:
         config.algorithm_params["destroy_method"] = dest_method_enum
+
+    config.algorithm_params["weight"] = args.weight
 
     return args.instance, config
 
