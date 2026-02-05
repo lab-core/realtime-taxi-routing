@@ -13,7 +13,7 @@ def create_random_requests(
         durations,
         time_window,
         sim_time=30 * 60,
-        hour_fare=80.0,
+        hour_fare=60.0,
         advance_notice=30,
         known_portion=100,
         nb_requests=None):
