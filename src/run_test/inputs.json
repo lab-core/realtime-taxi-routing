@@ -1,13 +1,14 @@
 {
-  "task_type": "single_test",
+  "task_type": "scenarios",
   "single_test": {
     "instances": "2-Med_1",
-    "objectives": "total_customer",
-    "algorithms": "mip-solver",
+    "objectives": "multi_objective",
+    "algorithms": "mip_solver",
     "solution_mode": "offline",
-    "time_windows": 3,
+    "time_windows": 6,
     "known_portion": 25,
     "nb_scenario": 3,
+    "weight": 0,
     "consensus_params": "qualitative",
     "destroy_method": "fix_arrivals"
   },
@@ -15,7 +16,7 @@
     {
       "scenario": "initial_test",
       "parameters": {
-        "instances": ["1-Low_1", "1-Low_2", "1-Low_3", "2-Med_1", "2-Med_2", "2-Med_3", "3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["2-Med_1"],
         "objectives": ["total_customers"],
         "algorithms": ["mip_solver"],
         "solution_mode": ["offline"],
@@ -25,7 +26,7 @@
     {
       "scenario": "TP1",
       "parameters": {
-        "instances": ["1-Low_1", "1-Low_2", "1-Low_3", "2-Med_1", "2-Med_2", "2-Med_3", "3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["3-High_1", "3-High_2", "3-High_3"],
         "objectives": ["total_profit", "waiting_time", "total_customers"],
         "algorithms": ["mip_solver"],
         "solution_mode": ["offline"],
@@ -33,9 +34,20 @@
       }
     },
     {
+      "scenario": "TP1_Multi",
+      "parameters": {
+        "instances": ["3-High_2"],
+        "objectives": ["multi_objective"],
+        "algorithms": ["mip_solver"],
+        "solution_mode": ["offline"],
+        "time_windows": [6],
+        "weight": [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+      }
+    },
+    {
       "scenario": "TP2_1",
       "parameters": {
-        "instances": ["1-Low_1", "1-Low_2", "1-Low_3", "2-Med_1", "2-Med_2", "2-Med_3", "3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["3-High_1", "3-High_2", "3-High_3"],
         "objectives": ["total_profit"],
         "algorithms": ["re_optimize"],
         "solution_mode": ["partial_online"],
@@ -47,7 +59,7 @@
     {
       "scenario": "TP2_2",
       "parameters": {
-        "instances": ["1-Low_1", "1-Low_2", "1-Low_3", "2-Med_1", "2-Med_2", "2-Med_3", "3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["3-High_1", "3-High_2", "3-High_3"],
         "objectives": ["total_profit"],
         "algorithms": ["re_optimize"],
         "solution_mode": ["advance_notice"],
@@ -58,7 +70,7 @@
     {
       "scenario": "TP3",
       "parameters": {
-        "instances": ["1-Low_1", "1-Low_2", "1-Low_3", "2-Med_1", "2-Med_2", "2-Med_3", "3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["3-High_1", "3-High_2", "3-High_3"],
         "objectives": ["total_profit", "waiting_time", "total_customers"],
         "algorithms": ["greedy", "random","ranking"],
         "solution_mode": ["fully_online","advance_notice"],
@@ -68,32 +80,32 @@
     {
       "scenario": "TP4_scenario",
       "parameters": {
-        "instances": ["2-Med_3"],
+        "instances": ["3-High_1"],
         "objectives": ["total_profit"],
         "algorithms": ["consensus"],
         "solution_mode": ["fully_online"],
         "time_windows": [3],
-        "nb_scenario": [3,4,5,6,7,8,9,10,11,12,13,14,15],
+        "nb_scenario": [3,5,7,9,11,13,15],
         "consensus_params": ["quantitative","qualitative"]
       }
     },
     {
       "scenario": "TP4_CONSENSUS",
       "parameters": {
-        "instances": ["1-Low_1", "1-Low_2", "1-Low_3", "2-Med_1", "2-Med_2", "2-Med_3", "3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["3-High_1", "3-High_2", "3-High_3"],
         "objectives": ["total_profit"],
         "algorithms": ["consensus"],
         "solution_mode": ["partial_online"],
         "known_portion": [0, 25, 50],
         "time_windows": [3],
-        "nb_scenario": [11],
+        "nb_scenario": [4],
         "consensus_params": ["quantitative","qualitative"]
       }
     },
     {
       "scenario": "TP4_GREEDY",
       "parameters": {
-        "instances": ["1-Low_1", "1-Low_2", "1-Low_3", "2-Med_1", "2-Med_2", "2-Med_3", "3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["3-High_1", "3-High_2", "3-High_3"],
         "objectives": ["total_profit"],
         "algorithms": ["greedy"],
         "solution_mode": ["partial_online"],
@@ -108,7 +120,16 @@
       "plots":[
         {
           "plot_name": "offline_plot",
-          "metrics": ["% of Service","Average profit ($)","Average waiting time (s)"]
+          "metrics": ["% of Service","Total profit","Total wait time (min)"]
+        }
+      ]
+    },
+    {
+      "scenario": "TP1_Multi",
+      "plots":[
+        {
+          "plot_name": "multi_plot",
+          "metrics": ["Total profit", "Total wait time (min)"]
         }
       ]
     },
@@ -117,11 +138,11 @@
       "plots":[
         {
           "plot_name": "compare_algorithm_plot",
-          "metrics": ["Competitive Ratio","optimization_time (s)"]
+          "metrics": ["Competitive Ratio","runtime (s)"]
         },
         {
           "plot_name": "compare_algorithm_plot",
-          "metrics": ["% of Service","Average profit ($)","Average waiting time (s)"]
+          "metrics": ["% of Service","Total profit","Total wait time (min)"]
         }
       ]
     },
@@ -130,7 +151,7 @@
       "plots":[
         {
           "plot_name": "compare_algorithm_plot",
-          "metrics": ["% of Service","Average profit ($)","Average waiting time (s)"]
+          "metrics": ["% of Service","Average profit ($)","Avg. wait time (min)"]
         },
         {
           "plot_name": "compare_timeWindow_plot",
@@ -156,27 +177,27 @@
       "plots":[
         {
           "plot_name": "compare_algorithm_plot",
-          "metrics": ["Competitive Ratio","optimization_time (s)"]
+          "metrics": ["Competitive Ratio","runtime (s)"]
         },
         {
           "plot_name": "compare_algorithm_plot",
-          "metrics": ["% of Service","Average profit ($)","Average waiting time (s)"]
+          "metrics": ["% of Service","Average profit ($)","Avg. wait time (min)"]
         }
       ]
     }
   ],
   "create_instance": {
     "group_name": ["1-Low", "2-Med", "3-High"],
-    "num_tests_per_group": 3,
-    "num_suburbs": 8,
+    "num_tests_per_group": 5,
+    "num_suburbs": 9,
     "suburb_width": 4,
-    "city_width": 8,
-    "block_distance": 900.0,
+    "city_width": 7,
+    "block_distance": 800.0,
     "start_time": 0.0,
-    "hour_fare": 80.0,
+    "hour_fare": 60.0,
     "known_portion": 0,
     "advance_notice": 30,
     "sim_time": 3600,
-    "nb_vehicles": 20
+    "nb_vehicles": 25
   }
 }
