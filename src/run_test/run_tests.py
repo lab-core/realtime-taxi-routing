@@ -105,9 +105,15 @@ def run_scenarios(part: str, SCENARIOS: Dict[str, Dict[str, Any]]):
     logging.info(f"Results for '{part}' saved to {csv_file_path}.")
 
     # Print results
+    # Print results
+    cols_to_print = [
+        "Test", "# Trips", "# Vehicles", "Solution Mode",
+        "Time window (min)", "weight", "Algorithm", "Objective type",
+        "Objective value", "% of Service", "runtime (s)"
+    ]
     with pd.option_context('display.colheader_justify', 'center'):
-        print(df.to_markdown(tablefmt="pipe", headers="keys"))
-
+        # to_markdown will print headers on top, values below
+        print(df[cols_to_print].to_markdown(tablefmt="pipe", index=False))
 
 def generate_combinations(params: Dict[str, Any]) -> List[Dict[str, Any]]:
     """Generates all parameter combinations for scenarios."""

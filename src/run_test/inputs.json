@@ -2,7 +2,7 @@
   "task_type": "scenarios",
   "single_test": {
     "instances": "2-Med_1",
-    "objectives": "multi_objective",
+    "objectives": "total_customers",
     "algorithms": "mip_solver",
     "solution_mode": "offline",
     "time_windows": 6,
@@ -16,7 +16,7 @@
     {
       "scenario": "initial_test",
       "parameters": {
-        "instances": ["3-High_1", "3-High_2", "3-High_3"],
+        "instances": ["1-Low_1", "1-Low_2", "1-Low_3"],
         "objectives": ["total_customers"],
         "algorithms": ["mip_solver"],
         "solution_mode": ["offline"],

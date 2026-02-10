@@ -319,23 +319,18 @@ With default parameters you should obtain the following results (except for the 
   ```console
     Attribute              | Value
     ----------------------+---------------------------
-    Key                    | Med_1__3__total_customers
-    Test                   | Med_1
-    # Trips                | 72
-    # Vehicles             | 20
-    Solution Mode          | offline
-    Known portion (%)      | 100
-    Time window (min)      | 3
-    Algorithm              | MIP_Solver
-    Objective type         | total_customers
-    Objective value        | 61.0
-    # Served customers     | 61
-    Average profit         | 1017.79
-    Average waiting time   | 56.46
-    % of Service           | 84.7
-    optimization_time      | 0.251
+    Test              | 1-Low_1
+    # Trips           | 88
+    # Vehicles        | 25
+    Solution Mode     | offline
+    Time window (min) | 3
+    weight            | 1
+    Algorithm         | MIP_Solver
+    Objective type    | total_customers
+    Objective value   | 65.0
+    % of Service      | 73.9
+    runtime (s)       | 8.716
   ```
-
 
 Below is the explanation for the parameters used to generate instances:
 
