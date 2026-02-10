@@ -317,19 +317,19 @@ The following parameters can be specified in `inputs.json`:
 
 With default parameters you should obtain the following results (except for the optimization_time):
   ```console
-    Attribute              | Value
-    ----------------------+---------------------------
-    Test              | 1-Low_1
-    # Trips           | 88
-    # Vehicles        | 25
-    Solution Mode     | offline
-    Time window (min) | 3
-    weight            | 1
-    Algorithm         | MIP_Solver
-    Objective type    | total_customers
-    Objective value   | 65.0
-    % of Service      | 73.9
-    runtime (s)       | 8.716
+    Attribute            | Value
+    ---------------------+---------------------------
+    Test                 | 2-Med_1
+    # Trips              | 127
+    # Vehicles           | 25
+    Solution Mode        | offline
+    Time window (min)    | 6
+    weight               | 0
+    Algorithm            | MIP_Solver
+    Objective type       | total_customers
+    Objective value      | 94.0
+    % of Service         | 74.0
+    runtime (s)          | 12.19
   ```
 
 Below is the explanation for the parameters used to generate instances:
