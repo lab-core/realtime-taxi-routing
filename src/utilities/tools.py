@@ -127,6 +127,37 @@ def print_dict_as_table(input_dict):
         key_spacing = " " * (max_key_length - len(str(key)) + 2)
         print(f"{key}{key_spacing} | {value}")
 
+def print_result_as_table(results: dict):
+    """
+    Print a selected subset of a results dictionary in a neat 2-column table.
+    """
+    rows = [
+        ("Test", results.get("Test", "")),
+        ("# Trips", results.get("# Trips", results.get("Trips", ""))),
+        ("# Vehicles", results.get("# Vehicles", results.get("Vehicles", ""))),
+        ("Solution Mode", results.get("Solution Mode", "")),
+        ("Time window (min)", results.get("Time window (min)", "")),
+        ("weight", results.get("weight", "")),
+        ("Algorithm", results.get("Algorithm", "")),
+        ("Objective type", results.get("Objective type", "")),
+        ("Objective value", results.get("Objective value", "")),
+        ("% of Service", results.get("% of Service", "")),
+        ("runtime (s)", results.get("runtime (s)", "")),
+    ]
+
+    # Convert values to strings (safe for None, numbers, etc.)
+    rows = [(k, "" if v is None else str(v)) for k, v in rows]
+
+    # Column widths
+    left_w = max(len(k) for k, _ in rows)
+    right_w = max(len(v) for _, v in rows)
+
+    # Print table
+    print(f"{'Attribute'.ljust(left_w)} | {'Value'.ljust(right_w)}")
+    print(f"{'-' * left_w}-+-{'-' * right_w}")
+    for k, v in rows:
+        print(f"{k.ljust(left_w)} | {v}")
+
 
 def draw_network(network, save_path):
     """Function : Draw the network graph.

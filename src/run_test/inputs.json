@@ -16,7 +16,7 @@
     {
       "scenario": "initial_test",
       "parameters": {
-        "instances": ["2-Med_1"],
+        "instances": ["3-High_1", "3-High_2", "3-High_3"],
         "objectives": ["total_customers"],
         "algorithms": ["mip_solver"],
         "solution_mode": ["offline"],

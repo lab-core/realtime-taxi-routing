@@ -2,11 +2,12 @@ import itertools
 import os
 import logging
 from typing import Any, Dict, List
+import pandas as pd
 from src.utilities.enums import (Algorithm,Objectives,SolutionMode,DestroyMethod,ConsensusParams)
 from src.simulation.run_simulation import run_taxi_simulation
 from src.utilities.config import SimulationConfig
-from src.utilities.tools import print_dict_as_table, determine_cust_node_hour, match_enum
-import pandas as pd
+from src.utilities.tools import print_dict_as_table, determine_cust_node_hour, match_enum, print_result_as_table
+
 
 BASE_FOLDER = "data/Instances"
 GRAPH_FILE_PATH = os.path.join(BASE_FOLDER, "network.json")
@@ -41,7 +42,7 @@ def run_single_test(config_data: Dict[str, Any]):
     )
 
     combined_result = {**info_dict, **output_dict}
-    print_dict_as_table(combined_result)
+    print_result_as_table(combined_result)
 
 
 def run_scenarios(part: str, SCENARIOS: Dict[str, Dict[str, Any]]):
@@ -90,7 +91,7 @@ def run_scenarios(part: str, SCENARIOS: Dict[str, Dict[str, Any]]):
 
             combined_result = {**info_dict, **output_dict}
             results.append(combined_result)
-            print_dict_as_table(combined_result)
+            print_result_as_table(combined_result)
 
 
         except Exception as e:

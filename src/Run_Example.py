@@ -1,7 +1,7 @@
 import os
 import logging
 import argparse
-from src.utilities.tools import (print_dict_as_table, match_enum, determine_cust_node_hour)
+from src.utilities.tools import (print_dict_as_table, match_enum, determine_cust_node_hour, print_result_as_table)
 from src.utilities.enums import (Algorithm, Objectives, DestroyMethod, ConsensusParams, SolutionMode)
 from src.simulation.run_simulation import run_taxi_simulation
 from src.utilities.config import SimulationConfig
@@ -36,7 +36,7 @@ def run_example(test_folder: str, config: SimulationConfig) -> None:
 
     # Combine and print the results
     result = {**info_dict, **output_dict}
-    print_dict_as_table(result)
+    print_result_as_table(result)
 
 
 def parse_arguments() -> tuple[str, SimulationConfig]:
